@@ -190,11 +190,43 @@
 
       <!-- Track -->
       <div class="sec" id="secTrack" style="display:none">
-        <div class="hd">🏃 Track / Plyometrics / Stairs — Per‑rep logging</div>
+        <div class="hd">🏃 Track / Plyometrics / Stairs</div>
         <div class="bd">
-          <div class="muted sm">Add exercises (broad jumps, single‑leg stairs, bounds, etc.). Select unilateral/bilateral and note sets×reps. RPE drives CNS & TSS.</div>
+          
+          <!-- Warmup Checklist -->
+          <div class="sec" style="background:#0d1714;border:1px solid #1e6a4f;margin-bottom:12px">
+            <div class="hd" style="background:#0f1b17;border-bottom:1px solid #1e6a4f;color:#9de8c5;justify-content:space-between">
+              <span>✓ Warmup Routine Checklist</span>
+              <span id="warmupCount" style="color:#00ffb3">✓ 0/9 Complete</span>
+            </div>
+            <div class="bd" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px">
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Walk on toes 20yd fwd → 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Walk on heels 20yd fwd → 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Lunge 10yd fwd / 10yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Single yard hops 20yd fwd → 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Single yard hops LEFT 20yd fwd → RIGHT 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Double yard hops 20yd fwd → 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Single leg double yard hops LEFT 20yd fwd → RIGHT 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> Skipping 20yd fwd → 20yd back</label>
+              <label class="pill" style="cursor:pointer;user-select:none"><input type="checkbox" class="warmup-check" onchange="updateWarmupCount()"> High knees 15yd total</label>
+            </div>
+          </div>
+
+          <div class="muted sm" style="margin-bottom:12px">
+            <strong>How it works:</strong> Click "+ Add Exercise" to add each exercise • Enter exercise name • Choose Bilateral (both legs) or Unilateral (single leg) • Enter sets and reps per set • RPE (1-10) affects CNS load & TSS
+            <br><br>
+            <strong>Surface Type Impact on Tendon Load:</strong> Turf (0.9×) - Softer, reduced impact | Track (1.1×) - Standard surface (default) | Concrete (1.4×) - Hard surface, maximum impact
+            <br><br>
+            <strong>UFC PI Tendon Load System (Impact Coefficients):</strong> Low Impact Bounding = 0.6× (gentle elastic work) | Jump Rope / Fast Contacts = 0.8× (moderate impact) | Box Jumps / Drop Landing = 1.2× (higher eccentric load) | Depth Jumps / Stadium Stairs = 1.5×+ (maximum tendon stress)
+            <br><br>
+            <strong>Tendon Load Safety Zones:</strong> 60-120 contacts/week = Base conditioning | 120-200 = Power development | 200-350 = High elastic training | >350 = Injury risk zone (deload required)
+            <br><br>
+            <strong>RPE (Rate of Perceived Exertion):</strong> 1-3: Easy/Warmup | 4-6: Moderate | 7-8: Hard | 9-10: Max Effort • Higher RPE = Higher CNS load & TSS (affects recovery needs)
+          </div>
+
           <div class="row" style="margin:8px 0">
-            <button class="btn" onclick="addTrackExercise()">+ Add Exercise</button>
+            <button class="btn primary" onclick="addTrackExercise()">+ Add Exercise</button>
+            <span class="muted sm">Add each exercise with sets and reps.</span>
           </div>
           <div id="trackExercises"></div>
         </div>
@@ -241,8 +273,8 @@
           </div>
 
           <div class="sec" style="margin-top:10px;background:#0d1714;border:1px solid #1e6a4f">
-            <div class="hd" style="background:#0f1b17;border-bottom:1px solid #1e6a4f;color:#9de8c5">Explain like I'm 5</div>
-            <div class="bd" id="bikeELI5">Pick a plan above to see simple steps.</div>
+            <div class="hd" style="background:#0f1b17;border-bottom:1px solid #1e6a4f;color:#9de8c5">Instructions</div>
+            <div class="bd" id="bikeELI5">Pick a plan above to see instructions.</div>
           </div>
         </div>
       </div>
@@ -404,6 +436,17 @@
     </div>
   </div>
 
+  <!-- WEEKLY MODAL -->
+  <div class="modal" id="weekModal">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <div class="pill">📊 Last 7 Days Summary</div>
+        <button class="btn" onclick="closeWeek()">✕ Close</button>
+      </div>
+      <div id="weekBody"></div>
+    </div>
+  </div>
+
 <script>
   // ---------- Helpers & storage ----------
   const fmt=(n)=>Number(n||0);
@@ -488,17 +531,19 @@
   const pfRHR=document.getElementById('pfRHR');
   const pfMHR=document.getElementById('pfMHR');
   const pfSport=document.getElementById('pfSport');
+  const pfPriority=document.getElementById('pfPriority');
   const pfAvail=document.getElementById('pfAvail');
   document.getElementById('profileBtn').onclick=()=>{
     const p=LS.get('elite_profile',{});
     pfAge.value=p.age||''; pfSex.value=p.sex||''; pfHt.value=p.ht||''; pfWt.value=p.wt||'';
-    pfTA.value=p.ta||''; pfRHR.value=p.rhr||''; pfMHR.value=p.mhr||''; pfSport.value=p.sport||''; pfAvail.value=p.avail||'';
+    pfTA.value=p.ta||''; pfRHR.value=p.rhr||''; pfMHR.value=p.mhr||''; pfSport.value=p.sport||''; 
+    pfPriority.value=p.priority||'Balanced (All domains equally)'; pfAvail.value=p.avail||'';
     profileModal.classList.add('show');
   };
   function closeProfile(){profileModal.classList.remove('show')}
   function saveProfile(){
     const p={age:fmt(pfAge.value),sex:pfSex.value,ht:fmt(pfHt.value),wt:fmt(pfWt.value),ta:fmt(pfTA.value),
-      rhr:fmt(pfRHR.value),mhr:fmt(pfMHR.value),sport:pfSport.value,avail:fmt(pfAvail.value)};
+      rhr:fmt(pfRHR.value),mhr:fmt(pfMHR.value),sport:pfSport.value,priority:pfPriority.value,avail:fmt(pfAvail.value)};
     if(!p.mhr && p.age) p.mhr=Math.round(208-0.7*p.age);
     LS.set('elite_profile',p); renderZoneChips(); profileModal.classList.remove('show');
   }
@@ -581,30 +626,138 @@
     sb.appendChild(tr);
   }
 
-  // ---------- Track minimal (rep logger only) ----------
+  // ---------- Track with comprehensive fields ----------
+  function updateWarmupCount(){
+    const checks = document.querySelectorAll('.warmup-check');
+    const checked = [...checks].filter(c=>c.checked).length;
+    document.getElementById('warmupCount').textContent = `✓ ${checked}/9 Complete`;
+  }
+  
   function addTrackExercise(){
     const c=document.getElementById('trackExercises');
     const i=c.children.length+1;
     const el=document.createElement('div');
     el.className='sec';
     el.innerHTML=`
-      <div class="hd">Exercise #${i}</div>
-      <div class="bd grid2">
-        <div style="grid-column:span 2"><label>Name</label><input class="tName" placeholder="Broad jump, single‑leg stairs, bounds…"></div>
-        <div><label>Type</label><select class="tType"><option>bilateral</option><option>unilateral</option></select></div>
-        <div><label>Sets</label><input class="tSets" type="number" min="1"></div>
-        <div class="tBi"><label>Reps per set</label><input class="tReps" type="number" min="1"></div>
-        <div class="tUni" style="display:none"><label>Right reps/set</label><input class="tR" type="number" min="1"></div>
-        <div class="tUni" style="display:none"><label>Left reps/set</label><input class="tL" type="number" min="1"></div>
-        <div><label>RPE</label><input class="tRPE" type="number" step="0.5" min="1" max="10"></div>
+      <div class="hd" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Exercise #${i}</span>
+        <button class="btn" onclick="this.closest('.sec').remove()" style="padding:6px 12px">🗑 Remove</button>
+      </div>
+      <div class="bd">
+        <div class="grid2" style="grid-template-columns:repeat(3,1fr)">
+          <div style="grid-column:span 1">
+            <label>Exercise Name</label>
+            <input class="tName" placeholder="e.g., Broad Jump, Single Leg Stair Jump">
+          </div>
+          <div>
+            <label>Type</label>
+            <select class="tType" onchange="toggleUnilateral(this)">
+              <option value="bilateral">Bilateral (both legs)</option>
+              <option value="unilateral">Unilateral (single leg)</option>
+            </select>
+          </div>
+          <div>
+            <label>Sets</label>
+            <input class="tSets" type="number" min="1" placeholder="e.g., 4">
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px">
+          <div class="tBilateral">
+            <label>Reps per set</label>
+            <input class="tReps" type="number" min="1" placeholder="e.g., 34">
+          </div>
+          <div class="tUnilateral" style="display:none;grid-column:span 2">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label>Left Reps per set</label>
+                <input class="tRepsL" type="number" min="1" placeholder="e.g., 17">
+              </div>
+              <div>
+                <label>Right Reps per set</label>
+                <input class="tRepsR" type="number" min="1" placeholder="e.g., 17">
+              </div>
+            </div>
+          </div>
+          <div>
+            <label>RPE (1-10)</label>
+            <input class="tRPE" type="number" step="0.5" min="1" max="10" placeholder="8">
+          </div>
+          <div>
+            <label>Time (MM:SS)</label>
+            <input class="tTime" type="text" placeholder="00:30">
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px">
+          <div>
+            <label>Flight Time (ms) - RSI <span class="muted sm">Optional</span></label>
+            <input class="tFlight" type="number" placeholder="Optional">
+          </div>
+          <div>
+            <label>Contact Time (ms) - RSI <span class="muted sm">Optional</span></label>
+            <input class="tContact" type="number" placeholder="Optional">
+          </div>
+          <div>
+            <label>Rest Between Sets (s)</label>
+            <input class="tRest" type="number" placeholder="e.g., 60">
+          </div>
+          <div>
+            <label>Notes</label>
+            <input class="tNotes" type="text" placeholder="Optional notes">
+          </div>
+        </div>
+
+        <!-- HR Screenshot section -->
+        <div class="sec" style="margin-top:12px;background:#0e1419">
+          <div class="hd" style="font-size:13px">Heart Rate Data <span class="muted sm">(Optional)</span></div>
+          <div class="bd">
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start">
+              <div>
+                <label>HR Screenshot (optional)</label>
+                <div style="border:1px solid #2a3746;border-radius:8px;padding:20px;text-align:center;background:#0a0d10;min-height:120px;display:flex;align-items:center;justify-content:center">
+                  <input type="file" class="tHRfile" accept="image/*" style="width:100%;height:auto;padding:4px;font-size:11px">
+                </div>
+              </div>
+              <div>
+                <label>Manual HR summary</label>
+                <div class="grid2">
+                  <div>
+                    <label class="sm">Avg HR</label>
+                    <input class="tAvgHR" type="number" placeholder="e.g., 165">
+                  </div>
+                  <div>
+                    <label class="sm">Peak HR</label>
+                    <input class="tPeakHR" type="number" placeholder="e.g., 182">
+                  </div>
+                  <div>
+                    <label class="sm">Min in Zone 5</label>
+                    <input class="tZ5" type="number" step="0.1" placeholder="e.g., 3.5">
+                  </div>
+                  <div>
+                    <label class="sm">Min in Zone 4</label>
+                    <input class="tZ4" type="number" step="0.1" placeholder="e.g., 8.2">
+                  </div>
+                </div>
+                <div style="margin-top:8px">
+                  <label class="sm">DFA-α1 (HRV Complexity) <span class="muted">Optional - Advanced HRV metric</span></label>
+                  <input class="tDFA" type="number" step="0.01" placeholder="Optional - Advanced HRV metric">
+                  <div class="muted sm" style="margin-top:4px">From Polar app summary for best accuracy. DFA-α1 <0.75 during easy work = autonomic overtraining.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>`;
     c.appendChild(el);
-    const sel=el.querySelector('.tType');
-    sel.onchange=()=>{
-      const uni=sel.value==='unilateral';
-      el.querySelectorAll('.tBi').forEach(x=>x.style.display=uni?'none':'block');
-      el.querySelectorAll('.tUni').forEach(x=>x.style.display=uni?'block':'none');
-    };
+  }
+  
+  function toggleUnilateral(select){
+    const parent = select.closest('.bd');
+    const isBilateral = select.value === 'bilateral';
+    parent.querySelector('.tBilateral').style.display = isBilateral ? 'block' : 'none';
+    parent.querySelector('.tUnilateral').style.display = isBilateral ? 'none' : 'block';
   }
 
   // ---------- Bike protocols ----------
@@ -630,21 +783,21 @@
   function applyBikeUI(){
     const p=bikeProto.value;
     const protoMap={
-      ng10:{r:10,w:30,rest:30,txt:`10 rounds. 30 sec go hard like chasing a ball, 30 sec pedal easy like walking. Don't stop the pedals.`,
-            hr:`Aim ~85% (${percentToBpm(85)} bpm).`},
-      prog5:{r:1,w:300,rest:0,txt:`Ride 5 minutes without stopping. Try to earn a few more calories each week. Like filling a jar with more marbles next time.`,
-            hr:`Aim ~78% (${percentToBpm(78)} bpm).`},
-      ext6:{r:6,w:300,rest:120,txt:`6 big rounds of 5 minutes. Then 2 minutes easy pedals. Keep each round steady, like reading 6 pages without rushing.`,
-            hr:`Aim ~78% (${percentToBpm(78)} bpm).`},
-      tab8:{r:8,w:20,rest:10,txt:`8 tiny sprints (20s) with tiny easy pedals (10s). It's fast: go hard, then soft, like red light/green light.`,
-            hr:`You'll reach 95%+ (≈${percentToBpm(95)} bpm).`},
-      ps10:{r:10,w:10,rest:50,txt:`10 super short blasts (10s) with long easy pedals (50s). Make each blast your best rocket launch.`,
-            hr:`Max effort; recover between blasts.`},
-      steady:{r:1,w:1800,rest:0,txt:`Ride easy for 20–40 min at a comfy talk‑able pace. Should feel like a slow bike ride with a friend.`,
-            hr:`Keep ${calcZones(LS.get('elite_profile',{})).z2[0]}–${calcZones(LS.get('elite_profile',{})).z2[1]} bpm (Zone 2).`},
-      z5:{r:6,w:60,rest:120,txt:`Push until your heart is working very hard for 1 minute, then pedal easy for 2 minutes. Repeat 6 times.`,
-            hr:`90%+ (≈${percentToBpm(92)} bpm).`},
-      peak:{r:6,w:20,rest:100,txt:`Sprint as fast as you can for 20 seconds, then easy pedals 100 seconds. Try to make every sprint powerful.`,
+      ng10:{r:10,w:30,rest:30,txt:`10 rounds of 0:30 hard effort / 0:30 easy recovery. Maintain steady RPM during work intervals. Do not stop pedaling between rounds.`,
+            hr:`Target ~85% max HR (${percentToBpm(85)} bpm).`},
+      prog5:{r:1,w:300,rest:0,txt:`Single 5:00 time trial. Aim for consistent pace throughout. Track total calories. Goal: beat previous week's calorie count.`,
+            hr:`Target ~78% max HR (${percentToBpm(78)} bpm).`},
+      ext6:{r:6,w:300,rest:120,txt:`6 rounds of 5:00 sustained effort at moderate intensity, 2:00 easy recovery between rounds. Focus on maintaining consistent output each round.`,
+            hr:`Target ~78% max HR (${percentToBpm(78)} bpm).`},
+      tab8:{r:8,w:20,rest:10,txt:`8 rounds of 0:20 maximum effort / 0:10 easy recovery. All-out sprint during work intervals. Classic Tabata protocol.`,
+            hr:`Expect 95%+ max HR (≈${percentToBpm(95)} bpm).`},
+      ps10:{r:10,w:10,rest:50,txt:`10 rounds of 0:10 maximal sprint / 0:50 full recovery. Focus on peak power output during each 10-second blast.`,
+            hr:`Max effort sprints; full recovery between efforts.`},
+      steady:{r:1,w:1800,rest:0,txt:`Steady-state cardio: 30:00 at conversational pace. Maintain Zone 2 heart rate throughout. Should be able to hold conversation.`,
+            hr:`Target Zone 2: ${calcZones(LS.get('elite_profile',{})).z2[0]}–${calcZones(LS.get('elite_profile',{})).z2[1]} bpm.`},
+      z5:{r:6,w:60,rest:120,txt:`6 rounds of 1:00 high intensity / 2:00 easy recovery. Push into Zone 5 during work intervals. Full recovery between rounds.`,
+            hr:`Target 90%+ max HR (≈${percentToBpm(92)} bpm).`},
+      peak:{r:6,w:20,rest:100,txt:`6 rounds of 0:20 maximum sprint / 1:40 full recovery. Focus on peak RPM and power during each sprint. Complete recovery between efforts.`,
             hr:`Max effort; full recovery between sprints.`}
     };
     const cfg=protoMap[p];
@@ -718,10 +871,10 @@
     const data={
       len:fmt(document.getElementById('fcLen').value), wk:fmt(document.getElementById('fcWeek').value),
       order:document.getElementById('fcOrder').value, level:document.getElementById('fcLevel').value,
-      t1:{watts:fmt(t1Watts.value), peak:fmt(t1Peak.value), hr60:fmt(t1HR60.value)},
-      t2:{mb:fmt(t2MB.value), R:fmt(t2R.value), L:fmt(t2L.value)},
-      t3:{dist:fmt(t3Dist.value), unit:t3Unit.value},
-      t4:{type:t4Type.value, load:fmt(t4Load.value)}
+      t1:{watts:fmt(document.getElementById('t1Watts').value), peak:fmt(document.getElementById('t1Peak').value), hr60:fmt(document.getElementById('t1HR60').value)},
+      t2:{mb:fmt(document.getElementById('t2MB').value), R:fmt(document.getElementById('t2R').value), L:fmt(document.getElementById('t2L').value)},
+      t3:{dist:fmt(document.getElementById('t3Dist').value), unit:document.getElementById('t3Unit').value},
+      t4:{type:document.getElementById('t4Type').value, load:fmt(document.getElementById('t4Load').value)}
     };
     LS.set('elite_camp',data);
     closeCamp();
@@ -729,7 +882,7 @@
 
   // ---------- Boot ----------
   function renderZoneOnBoot(){ renderZoneChips(); }
-  function weekInit(){ document.getElementById('weekBody')?.insertAdjacentHTML('afterbegin',''); }
+  function weekInit(){ if(document.getElementById('weekBody')) document.getElementById('weekBody').innerHTML=''; }
   renderZoneOnBoot(); renderCal(); weekInit();
 </script>
 </body>
